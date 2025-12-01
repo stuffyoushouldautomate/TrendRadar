@@ -208,71 +208,71 @@ def load_config():
         "slack_webhook_url", ""
     )
 
-    # 输出配置来源信息
+    # Output where notification configuration comes from
     notification_sources = []
     if config["FEISHU_WEBHOOK_URL"]:
-        source = "环境变量" if os.environ.get("FEISHU_WEBHOOK_URL") else "配置文件"
-        notification_sources.append(f"飞书({source})")
+        source = "env" if os.environ.get("FEISHU_WEBHOOK_URL") else "config"
+        notification_sources.append(f"Feishu({source})")
     if config["DINGTALK_WEBHOOK_URL"]:
-        source = "环境变量" if os.environ.get("DINGTALK_WEBHOOK_URL") else "配置文件"
-        notification_sources.append(f"钉钉({source})")
+        source = "env" if os.environ.get("DINGTALK_WEBHOOK_URL") else "config"
+        notification_sources.append(f"DingTalk({source})")
     if config["WEWORK_WEBHOOK_URL"]:
-        source = "环境变量" if os.environ.get("WEWORK_WEBHOOK_URL") else "配置文件"
-        notification_sources.append(f"企业微信({source})")
+        source = "env" if os.environ.get("WEWORK_WEBHOOK_URL") else "config"
+        notification_sources.append(f"WeWork({source})")
     if config["TELEGRAM_BOT_TOKEN"] and config["TELEGRAM_CHAT_ID"]:
         token_source = (
-            "环境变量" if os.environ.get("TELEGRAM_BOT_TOKEN") else "配置文件"
+            "env" if os.environ.get("TELEGRAM_BOT_TOKEN") else "config"
         )
-        chat_source = "环境变量" if os.environ.get("TELEGRAM_CHAT_ID") else "配置文件"
+        chat_source = "env" if os.environ.get("TELEGRAM_CHAT_ID") else "config"
         notification_sources.append(f"Telegram({token_source}/{chat_source})")
     if config["EMAIL_FROM"] and config["EMAIL_PASSWORD"] and config["EMAIL_TO"]:
-        from_source = "环境变量" if os.environ.get("EMAIL_FROM") else "配置文件"
-        notification_sources.append(f"邮件({from_source})")
+        from_source = "env" if os.environ.get("EMAIL_FROM") else "config"
+        notification_sources.append(f"Email({from_source})")
 
     if config["NTFY_SERVER_URL"] and config["NTFY_TOPIC"]:
-        server_source = "环境变量" if os.environ.get("NTFY_SERVER_URL") else "配置文件"
+        server_source = "env" if os.environ.get("NTFY_SERVER_URL") else "config"
         notification_sources.append(f"ntfy({server_source})")
 
     if config["BARK_URL"]:
-        bark_source = "环境变量" if os.environ.get("BARK_URL") else "配置文件"
+        bark_source = "env" if os.environ.get("BARK_URL") else "config"
         notification_sources.append(f"Bark({bark_source})")
 
     if config["SLACK_WEBHOOK_URL"]:
-        slack_source = "环境变量" if os.environ.get("SLACK_WEBHOOK_URL") else "配置文件"
+        slack_source = "env" if os.environ.get("SLACK_WEBHOOK_URL") else "config"
         notification_sources.append(f"Slack({slack_source})")
 
     if notification_sources:
-        print(f"通知渠道配置来源: {', '.join(notification_sources)}")
+        print(f"Notification channel sources: {', '.join(notification_sources)}")
     else:
-        print("未配置任何通知渠道")
+        print("No notification channels configured")
 
     return config
 
 
-print("正在加载配置...")
+print("Loading configuration...")
 CONFIG = load_config()
-print(f"TrendRadar v{VERSION} 配置加载完成")
-print(f"监控平台数量: {len(CONFIG['PLATFORMS'])}")
+print(f"TrendRadar v{VERSION} configuration loaded")
+print(f"Number of monitored platforms: {len(CONFIG['PLATFORMS'])}")
 
 
-# === 工具函数 ===
+# === Helper Functions ===
 def get_beijing_time():
-    """获取北京时间"""
+    """Get current time in Asia/Shanghai (Beijing time)"""
     return datetime.now(pytz.timezone("Asia/Shanghai"))
 
 
 def format_date_folder():
-    """格式化日期文件夹"""
-    return get_beijing_time().strftime("%Y年%m月%d日")
+    """Format date folder name (YYYY-MM-DD)"""
+    return get_beijing_time().strftime("%Y-%m-%d")
 
 
 def format_time_filename():
-    """格式化时间文件名"""
-    return get_beijing_time().strftime("%H时%M分")
+    """Format time-based filename (HH-mm)"""
+    return get_beijing_time().strftime("%H-%M")
 
 
 def clean_title(title: str) -> str:
-    """清理标题中的特殊字符"""
+    """Clean special characters in title"""
     if not isinstance(title, str):
         title = str(title)
     cleaned_title = title.replace("\n", " ").replace("\r", " ")
@@ -282,12 +282,12 @@ def clean_title(title: str) -> str:
 
 
 def ensure_directory_exists(directory: str):
-    """确保目录存在"""
+    """Ensure directory exists"""
     Path(directory).mkdir(parents=True, exist_ok=True)
 
 
 def get_output_path(subfolder: str, filename: str) -> str:
-    """获取输出路径"""
+    """Get output file path"""
     date_folder = format_date_folder()
     output_dir = Path("output") / date_folder / subfolder
     ensure_directory_exists(str(output_dir))
@@ -297,7 +297,7 @@ def get_output_path(subfolder: str, filename: str) -> str:
 def check_version_update(
     current_version: str, version_url: str, proxy_url: Optional[str] = None
 ) -> Tuple[bool, Optional[str]]:
-    """检查版本更新"""
+    """Check for version updates"""
     try:
         proxies = None
         if proxy_url:
@@ -315,14 +315,14 @@ def check_version_update(
         response.raise_for_status()
 
         remote_version = response.text.strip()
-        print(f"当前版本: {current_version}, 远程版本: {remote_version}")
+        print(f"Current version: {current_version}, remote version: {remote_version}")
 
-        # 比较版本
+        # Compare versions
         def parse_version(version_str):
             try:
                 parts = version_str.strip().split(".")
                 if len(parts) != 3:
-                    raise ValueError("版本号格式不正确")
+                    raise ValueError("Invalid version format")
                 return int(parts[0]), int(parts[1]), int(parts[2])
             except:
                 return 0, 0, 0
@@ -334,12 +334,12 @@ def check_version_update(
         return need_update, remote_version if need_update else None
 
     except Exception as e:
-        print(f"版本检查失败: {e}")
+        print(f"Version check failed: {e}")
         return False, None
 
 
 def is_first_crawl_today() -> bool:
-    """检测是否是当天第一次爬取"""
+    """Check whether this is the first crawl today"""
     date_folder = format_date_folder()
     txt_dir = Path("output") / date_folder / "txt"
 
@@ -351,7 +351,7 @@ def is_first_crawl_today() -> bool:
 
 
 def html_escape(text: str) -> str:
-    """HTML转义"""
+    """HTML escape"""
     if not isinstance(text, str):
         text = str(text)
 
@@ -364,9 +364,9 @@ def html_escape(text: str) -> str:
     )
 
 
-# === 推送记录管理 ===
+# === Push Record Management ===
 class PushRecordManager:
-    """推送记录管理器"""
+    """Manage push records"""
 
     def __init__(self):
         self.record_dir = Path("output") / ".push_records"
@@ -374,16 +374,16 @@ class PushRecordManager:
         self.cleanup_old_records()
 
     def ensure_record_dir(self):
-        """确保记录目录存在"""
+        """Ensure record directory exists"""
         self.record_dir.mkdir(parents=True, exist_ok=True)
 
     def get_today_record_file(self) -> Path:
-        """获取今天的记录文件路径"""
+        """Get record file path for today"""
         today = get_beijing_time().strftime("%Y%m%d")
         return self.record_dir / f"push_record_{today}.json"
 
     def cleanup_old_records(self):
-        """清理过期的推送记录"""
+        """Clean up expired push records"""
         retention_days = CONFIG["PUSH_WINDOW"]["RECORD_RETENTION_DAYS"]
         current_time = get_beijing_time()
 
@@ -395,12 +395,12 @@ class PushRecordManager:
 
                 if (current_time - file_date).days > retention_days:
                     record_file.unlink()
-                    print(f"清理过期推送记录: {record_file.name}")
+                    print(f"Removed expired push record: {record_file.name}")
             except Exception as e:
-                print(f"清理记录文件失败 {record_file}: {e}")
+                print(f"Failed to clean record file {record_file}: {e}")
 
     def has_pushed_today(self) -> bool:
-        """检查今天是否已经推送过"""
+        """Check if a push has already been sent today"""
         record_file = self.get_today_record_file()
 
         if not record_file.exists():
@@ -411,11 +411,11 @@ class PushRecordManager:
                 record = json.load(f)
             return record.get("pushed", False)
         except Exception as e:
-            print(f"读取推送记录失败: {e}")
+            print(f"Failed to read push record: {e}")
             return False
 
     def record_push(self, report_type: str):
-        """记录推送"""
+        """Record a successful push"""
         record_file = self.get_today_record_file()
         now = get_beijing_time()
 
@@ -428,31 +428,31 @@ class PushRecordManager:
         try:
             with open(record_file, "w", encoding="utf-8") as f:
                 json.dump(record, f, ensure_ascii=False, indent=2)
-            print(f"推送记录已保存: {report_type} at {now.strftime('%H:%M:%S')}")
+            print(f"Push record saved: {report_type} at {now.strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"保存推送记录失败: {e}")
+            print(f"Failed to save push record: {e}")
 
     def is_in_time_range(self, start_time: str, end_time: str) -> bool:
-        """检查当前时间是否在指定时间范围内"""
+        """Check if current time is within configured time range"""
         now = get_beijing_time()
         current_time = now.strftime("%H:%M")
     
         def normalize_time(time_str: str) -> str:
-            """将时间字符串标准化为 HH:MM 格式"""
+            """Normalize time string to HH:MM format"""
             try:
                 parts = time_str.strip().split(":")
                 if len(parts) != 2:
-                    raise ValueError(f"时间格式错误: {time_str}")
+                    raise ValueError(f"Invalid time format: {time_str}")
             
                 hour = int(parts[0])
                 minute = int(parts[1])
-            
+
                 if not (0 <= hour <= 23 and 0 <= minute <= 59):
-                    raise ValueError(f"时间范围错误: {time_str}")
-            
+                    raise ValueError(f"Time out of range: {time_str}")
+
                 return f"{hour:02d}:{minute:02d}"
             except Exception as e:
-                print(f"时间格式化错误 '{time_str}': {e}")
+                print(f"Time normalize error '{time_str}': {e}")
                 return time_str
     
         normalized_start = normalize_time(start_time)
@@ -460,16 +460,18 @@ class PushRecordManager:
         normalized_current = normalize_time(current_time)
     
         result = normalized_start <= normalized_current <= normalized_end
-    
+
         if not result:
-            print(f"时间窗口判断：当前 {normalized_current}，窗口 {normalized_start}-{normalized_end}")
-    
+            print(
+                f"Outside push window: now {normalized_current}, window {normalized_start}-{normalized_end}"
+            )
+
         return result
 
 
-# === 数据获取 ===
+# === Data Fetching ===
 class DataFetcher:
-    """数据获取器"""
+    """Fetch data from upstream API"""
 
     def __init__(self, proxy_url: Optional[str] = None):
         self.proxy_url = proxy_url
